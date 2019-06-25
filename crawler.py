@@ -28,7 +28,10 @@ def Auth():
 def getTweets(api, user):
     # get 200 tweets of one user, response in json
     all_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True)
-    last_tweet_id = all_tweets[-1].id
+    if all_tweets:
+        last_tweet_id = all_tweets[-1].id
+    else:
+        last_tweet_id = 0
 
     # get all tweets
     count = 0
@@ -58,7 +61,7 @@ def createFiles(user):
     return [filename, filename_path1, filename_path2]
 
 
-def crawler(user, all_tweets, filename, filename_path1, filename_path2):
+def download(user, all_tweets, filename, filename_path1, filename_path2):
     image_files = []
     video_files = []
     index_of_video = []
@@ -68,6 +71,8 @@ def crawler(user, all_tweets, filename, filename_path1, filename_path2):
             ['userId', 'userName', 'tweet_id', 'created_at', 'message', 'media_id', 'media_url', 'media_type',
              'media_size'])
 
+        print(all_tweets[0].entities['urls'][0]['expanded_url'])
+        print(all_tweets[0].entities['hashtags'])
         try:
             for status in all_tweets:
                 media_id = []
@@ -103,10 +108,10 @@ def crawler(user, all_tweets, filename, filename_path1, filename_path2):
                                 info.append({'duration_millis': media[i]['video_info']['duration_millis'],
                                              'additional_media_info': media[i]['additional_media_info']})
 
-                        writer.writerow(
-                            [status.user.id, status.user.screen_name, status.id_str, status.created_at,
-                             status.text.encode('utf-8'),
-                             media_id, media_url, media_type, info])
+                    writer.writerow(
+                        [status.user.id, status.user.screen_name, status.id_str, status.created_at,
+                         status.text.encode('utf-8'),
+                         media_id, media_url, media_type, info])
 
             print('Downloading ' + str(len(image_files)) + ' images.....')
             for image_file in image_files:
@@ -133,4 +138,4 @@ user = input("Enter twitter user_name - ")
 files = createFiles(user)
 api = Auth()
 all_tweets = getTweets(api, user)
-crawler(user, all_tweets, files[0], files[1], files[2])
+download(user, all_tweets, files[0], files[1], files[2])
