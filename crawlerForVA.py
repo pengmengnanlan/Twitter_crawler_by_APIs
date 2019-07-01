@@ -46,12 +46,12 @@ def isVideo(s):
         return True
 
 
-def isRadio(s):
-    if s.startswith('https://soundcloud.com/'):
+def isAudio(s):
+    if s.startswith('https://clyp_it/'):
         return True
 
 
-def getTweets(api, user, filename):
+def getTweets(api, user, filename, filename_path1, filename_path2):
     urls_of_video = set()
     urls_of_audio = set()
 
@@ -64,7 +64,7 @@ def getTweets(api, user, filename):
                 expanded_urls = []
                 try:
                     for u in tweet.entities['urls']:
-                        if isVideo(u['expanded_url']) or isRadio(u['expanded_url']):
+                        if isVideo(u['expanded_url']) or isAudio(u['expanded_url']):
                             expanded_urls.append(u['expanded_url'])
                             writer.writerow(
                                 [tweet.user.id, tweet.user.screen_name, tweet.created_at,
@@ -72,7 +72,7 @@ def getTweets(api, user, filename):
                                  expanded_urls])
                             if isVideo(u['expanded_url']):
                                 urls_of_video.add(u['expanded_url'])
-                            elif isRadio(u['expanded_url']):
+                            elif isAudio(u['expanded_url']):
                                 urls_of_audio.add(u['expanded_url'])
                 except IndexError:
                     urls_of_video.add('')
@@ -81,11 +81,11 @@ def getTweets(api, user, filename):
             print(e.reason)
             time.sleep(60)
 
-    with open(filename+'/urls_of_video_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path1+'/urls_of_video_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_video:
             txt.write(i + '\n')
 
-    with open(filename+'/urls_of_audio_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path2+'/urls_of_audio_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_audio:
             txt.write(i + '\n')
 
@@ -93,4 +93,4 @@ def getTweets(api, user, filename):
 user = input("Enter twitter user_name - ")
 files = createFiles(user)
 api = Auth()
-getTweets(api, user, files[0])
+getTweets(api, user, files[0], files[1], files[2])
