@@ -52,3 +52,6 @@ filename = 'D:\p\crawler\code.128.mp3'
 r = requests.get(url, stream=True).content
 with open(filename, "wb") as mp3:
     mp3.write(r)'''
+
+hashtag = 'youtube'
+print(hashtag == 'youtube')
