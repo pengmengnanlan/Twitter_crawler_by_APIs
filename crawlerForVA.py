@@ -42,12 +42,12 @@ def createFiles(user):
 
 
 def isVideo(s):
-    if s.startswith('https://youtu.be/'):
+    if s.startswith('https://youtu.be/') or s.startswith('https://www.youtube.com/'):
         return True
 
 
 def isAudio(s):
-    if s.startswith('https://clyp_it/'):
+    if s.startswith('https://clyp.it/'):
         return True
 
 
@@ -55,7 +55,7 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
     urls_of_video = set()
     urls_of_audio = set()
 
-    with open(filename+'/tweets_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
+    with open(filename + '/tweets_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
         writer = csv.writer(the_file)
         writer.writerow(['userId', "userName", 'created_at', 'message', 'urls_for_media'])
 
@@ -81,11 +81,11 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
             print(e.reason)
             time.sleep(60)
 
-    with open(filename_path1+'/urls_of_video_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path2 + '/urls_of_video_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_video:
             txt.write(i + '\n')
 
-    with open(filename_path2+'/urls_of_audio_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path1 + '/urls_of_audio_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_audio:
             txt.write(i + '\n')
 
