@@ -27,14 +27,14 @@ def Auth():
 
 
 def getTweets(api, user):
-    # get 200 tweets of one user, response in json
+    # the maximum number of twitters is 200 per time
     all_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True)
     if all_tweets:
         last_tweet_id = all_tweets[-1].id
     else:
         last_tweet_id = 0
 
-    # get all tweets
+    # get more tweets
     count = 0
     while count < 5:
         # get more tweets posted earlier than max_id
@@ -116,8 +116,8 @@ def download(user, all_tweets, filename, filename_path1, filename_path2):
 
                         writer.writerow(
                             [status.user.id, status.user.screen_name, status.id_str, status.created_at,
-                            status.text.encode('utf-8'),
-                            media_id, media_url, media_type, info])
+                             status.text.encode('utf-8'),
+                             media_id, media_url, media_type, info])
 
             print('Downloading ' + str(len(image_files)) + ' images.....')
             for image_file in image_files:
