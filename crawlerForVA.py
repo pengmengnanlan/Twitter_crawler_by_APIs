@@ -57,7 +57,7 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
 
     with open(filename + '/tweets_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
         writer = csv.writer(the_file)
-        writer.writerow(['userId', "userName", 'created_at', 'message', 'urls_for_media'])
+        writer.writerow(['userId', "userName", 'tweet_id', 'created_at', 'message', 'media_url', 'media_type'])
 
         try:
             for tweet in tweepy.Cursor(api.user_timeline, screen_name=user).items():
@@ -66,13 +66,17 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
                     for u in tweet.entities['urls']:
                         if isVideo(u['expanded_url']) or isAudio(u['expanded_url']):
                             expanded_urls.append(u['expanded_url'])
-                            writer.writerow(
-                                [tweet.user.id, tweet.user.screen_name, tweet.created_at,
-                                 tweet.text.encode('utf-8'),
-                                 expanded_urls])
                             if isVideo(u['expanded_url']):
+                                writer.writerow(
+                                    [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at,
+                                     tweet.text.encode('utf-8'),
+                                     expanded_urls, 'video'])
                                 urls_of_video.add(u['expanded_url'])
                             elif isAudio(u['expanded_url']):
+                                writer.writerow(
+                                    [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at,
+                                     tweet.text.encode('utf-8'),
+                                     expanded_urls, 'audio'])
                                 urls_of_audio.add(u['expanded_url'])
                 except IndexError:
                     urls_of_video.add('')
