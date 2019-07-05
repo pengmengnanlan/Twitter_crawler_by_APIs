@@ -27,33 +27,23 @@ def Auth():
     return api
 
 
-def getTweets(api, user):
-    # the maximum number of twitters is 200 per time
-    all_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True)
-    if all_tweets:
-        last_tweet_id = all_tweets[-1].id
-    else:
-        last_tweet_id = 0
+def getTweets(api, info):
+    all_tweets = []
+    # search tweets with the screen_name of user
+    # for tweet in tweepy.Cursor(api.user_timeline, screen_name=info, tweet_mode='extended').items():
+    #     all_tweets.append(tweet)
 
-    # get more tweets
-    count = 0
-    while count < 5:
-        # get more tweets posted earlier than max_id
-        more_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True,
-                                        max_id=last_tweet_id - 1)
-        # break if there is no more older tweets; otherwise keep searching until all the tweets of this user can be found
-        if len(more_tweets) == 0:
-            break
-        else:
-            last_tweet_id = more_tweets[-1].id - 1
-            all_tweets = all_tweets + more_tweets
-        count += 1
+    # search tweets with the keywords
+    for tweet in tweepy.Cursor(api.search, q=info, geocode='1.3552217,103.8231561,100km',
+                               rpp=100, tweet_mode='extended').items(50):
+        all_tweets.append(tweet)
+
     return all_tweets
 
 
-def createFiles(user):
+def createFiles(info):
     now_path = os.getcwd()
-    filename = u'' + user + ''
+    filename = u'' + info + ''
     image_filename = u'Image'
     video_filename = u'Original_Video'
     youtube_video_filename = u'Youtube_Video'
@@ -91,12 +81,13 @@ def isAudio(s):
         return True
 
 
-def getPhoto(user, all_tweets, filename):
+def getPhoto(info, all_tweets, filename):
     image_files = []
-    with open(filename + '/photos_of_user_' + user + '.csv', 'a', encoding='utf-8') as file_photo:
+    with open(filename + '/photos_of_user_' + info + '.csv', 'a', encoding='utf-8') as file_photo:
         writer = csv.writer(file_photo)
         writer.writerow(
-            ['userId', 'userName', 'tweet_id', 'created_at', 'message', 'media_id', 'media_url', 'media_type',
+            ['userId', 'userName', 'tweet_id', 'created_at', 'location', 'message', 'media_id', 'media_url',
+             'media_type',
              'media_size'])
 
         try:
@@ -126,7 +117,8 @@ def getPhoto(user, all_tweets, filename):
 
                                 writer.writerow(
                                     [status.user.id, status.user.screen_name, status.id_str, status.created_at,
-                                     status.text.encode('utf-8'), media_id, media_url, media_type, info])
+                                     status.user.location, status.full_text.encode('utf-8'), media_id, media_url, media_type,
+                                     info])
 
         except tweepy.TweepError as e:
             print(e.reason)
@@ -134,13 +126,13 @@ def getPhoto(user, all_tweets, filename):
         return image_files
 
 
-def getVideo(user, all_tweets, filename):
+def getVideo(info, all_tweets, filename):
     video_files = []
     index_of_video = []
-    with open(filename + '/original_video_of_user_' + user + '.csv', 'a', encoding='utf-8') as file_video:
+    with open(filename + '/original_video_of_user_' + info + '.csv', 'a', encoding='utf-8') as file_video:
         writer = csv.writer(file_video)
         writer.writerow(
-            ['userId', 'userName', 'tweet_id', 'created_at', 'message', 'media_url', 'media_type'])
+            ['userId', 'userName', 'tweet_id', 'created_at', 'location', 'message', 'media_url', 'media_type'])
 
         try:
             for status in all_tweets:
@@ -164,7 +156,7 @@ def getVideo(user, all_tweets, filename):
 
                                 writer.writerow(
                                     [status.user.id, status.user.screen_name, status.id_str, status.created_at,
-                                     status.text.encode('utf-8'), media_url, media_type])
+                                     status.user.location, status.full_text.encode('utf-8'), media_url, media_type])
 
         except tweepy.TweepError as e:
             print(e.reason)
@@ -172,13 +164,13 @@ def getVideo(user, all_tweets, filename):
     return [video_files, index_of_video]
 
 
-def getVideoFromYouTube(user, all_tweets, filename, filename_path):
+def getVideoFromYouTube(info, all_tweets, filename, filename_path):
     print(f'getVideoFromYouTube    begin：{time.strftime("%Y-%m-%d %H:%M:%S")}')
     time.sleep(5)
     urls_of_video = set()
-    with open(filename + '/Youtube_video_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
+    with open(filename + '/Youtube_video_of_' + info + '.csv', 'a', encoding='utf-8') as the_file:
         writer = csv.writer(the_file)
-        writer.writerow(['userId', "userName", 'tweet_id', 'created_at', 'message', 'media_url', 'media_type'])
+        writer.writerow(['userId', "userName", 'tweet_id', 'created_at', 'location', 'message', 'media_url', 'media_type'])
 
         try:
             for tweet in all_tweets:
@@ -188,8 +180,8 @@ def getVideoFromYouTube(user, all_tweets, filename, filename_path):
                         if isVideo(u['expanded_url']):
                             expanded_urls.append(u['expanded_url'])
                             writer.writerow(
-                                [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at,
-                                 tweet.text.encode('utf-8'), expanded_urls, 'video'])
+                                [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at, tweet.user.location,
+                                 tweet.full_text.encode('utf-8'), expanded_urls, 'video'])
                             urls_of_video.add(u['expanded_url'])
                 except IndexError:
                     urls_of_video.add('')
@@ -198,21 +190,21 @@ def getVideoFromYouTube(user, all_tweets, filename, filename_path):
             time.sleep(60)
 
     print('Downloading ' + str(len(urls_of_video)) + ' urls of video.....')
-    with open(filename_path + '/urls_of_Youtube_video_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path + '/urls_of_Youtube_video_of_' + info + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_video:
             txt.write(i + '\n')
 
     print(f'getVideoFromYouTube    end：{time.strftime("%Y-%m-%d %H:%M:%S")}')
 
 
-def getAudio(user, all_tweets, filename, filename_path):
+def getAudio(info, all_tweets, filename, filename_path):
     print(f'getAudio    begin：{time.strftime("%Y-%m-%d %H:%M:%S")}')
     time.sleep(5)
     urls_of_audio = set()
 
-    with open(filename + '/audio_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
+    with open(filename + '/audio_of_' + info + '.csv', 'a', encoding='utf-8') as the_file:
         writer = csv.writer(the_file)
-        writer.writerow(['userId', "userName", 'tweet_id', 'created_at', 'message', 'media_url', 'media_type'])
+        writer.writerow(['userId', "userName", 'tweet_id', 'created_at', 'location', 'message', 'media_url', 'media_type'])
 
         try:
             for tweet in all_tweets:
@@ -222,8 +214,8 @@ def getAudio(user, all_tweets, filename, filename_path):
                         if isAudio(u['expanded_url']):
                             expanded_urls.append(u['expanded_url'])
                             writer.writerow(
-                                [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at,
-                                 tweet.text.encode('utf-8'),
+                                [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at, tweet.user.location,
+                                 tweet.full_text.encode('utf-8'),
                                  expanded_urls, 'audio'])
                             urls_of_audio.add(u['expanded_url'])
                 except IndexError:
@@ -233,7 +225,7 @@ def getAudio(user, all_tweets, filename, filename_path):
             time.sleep(60)
 
     print('Downloading ' + str(len(urls_of_audio)) + ' urls of audio.....')
-    with open(filename_path + '/urls_of_audio_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+    with open(filename_path + '/urls_of_audio_of_' + info + '.txt', 'w', encoding='utf-8') as txt:
         for i in urls_of_audio:
             txt.write(i + '\n')
 
@@ -266,21 +258,21 @@ def downloadVideo(video_files, index_of_video, filename_path_video):
     print(f'downloadVideo    end：{time.strftime("%Y-%m-%d %H:%M:%S")}')
 
 
-user = input("Enter twitter user_name - ")
-files = createFiles(user)
+# info = input("Enter twitter user_name - ")
+info = input("Enter twitter keyword - ")
+files = createFiles(info)
 api = Auth()
-all_tweets = getTweets(api, user)
-photo = getPhoto(user, all_tweets, files[0])
-original_video = getVideo(user, all_tweets, files[0])
-
+all_tweets = getTweets(api, info)
+photo = getPhoto(info, all_tweets, files[0])
+original_video = getVideo(info, all_tweets, files[0])
 
 # Multiple-threading
 if __name__ == '__main__':
     thread = []
     t1 = threading.Thread(target=downloadPhoto, args=(photo, files[1]))
     t2 = threading.Thread(target=downloadVideo, args=(original_video[0], original_video[1], files[2]))
-    t3 = threading.Thread(target=getVideoFromYouTube, args=(user, all_tweets, files[0], files[3]))
-    t4 = threading.Thread(target=getAudio, args=(user, all_tweets, files[0], files[4]))
+    t3 = threading.Thread(target=getVideoFromYouTube, args=(info, all_tweets, files[0], files[3]))
+    t4 = threading.Thread(target=getAudio, args=(info, all_tweets, files[0], files[4]))
     thread.append(t1)
     thread.append(t2)
     thread.append(t3)
@@ -291,8 +283,3 @@ if __name__ == '__main__':
     for t in thread:
         t.join()
     print(f'End：{time.strftime("%Y-%m-%d %H:%M:%S")}')
-
-'''downloadPhoto(photo, files[1])
-downloadVideo(original_video[0], original_video[1], files[2])
-getVideoFromYouTube(user, all_tweets, files[0], files[3])
-getAudio(user, all_tweets, files[0], files[4])'''
