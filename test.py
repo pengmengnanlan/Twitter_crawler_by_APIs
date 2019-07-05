@@ -39,7 +39,7 @@ h = im.size[1]
 print("width：%s" % (w))
 print("height：%s" % (h))'''
 
-# download the radios
+# trying to download the radios
 '''user_agent = r'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
 headers = {'User-Agent': user_agent}
 filename = r'D:\p\crawler\code.mp3'
@@ -53,5 +53,30 @@ r = requests.get(url, stream=True).content
 with open(filename, "wb") as mp3:
     mp3.write(r)'''
 
-hashtag = 'youtube'
-print(hashtag == 'youtube')
+# api.user_timeline
+'''# the maximum number of twitters is 200 per time
+all_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True)
+if all_tweets:
+    last_tweet_id = all_tweets[-1].id
+else:
+    last_tweet_id = 0
+
+# get more tweets
+count = 0
+while count < 5:
+    # get more tweets posted earlier than max_id
+    more_tweets = api.user_timeline(screen_name=user, count=200, include_rts=False, exclude_replies=True,
+                                    max_id=last_tweet_id - 1)
+    # break if there is no more older tweets; otherwise keep searching until all the tweets of this user can be found
+    if len(more_tweets) == 0:
+        break
+    else:
+        last_tweet_id = more_tweets[-1].id - 1
+        all_tweets = all_tweets + more_tweets
+    count += 1'''
+
+# use functions without multiple thread
+'''downloadPhoto(photo, files[1])
+downloadVideo(original_video[0], original_video[1], files[2])
+getVideoFromYouTube(user, all_tweets, files[0], files[3])
+getAudio(user, all_tweets, files[0], files[4])'''
