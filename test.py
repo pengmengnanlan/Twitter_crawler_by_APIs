@@ -1,6 +1,8 @@
 import os
+import re
 import requests
 import urllib
+import wget
 from urllib import request
 from io import BytesIO
 
@@ -80,3 +82,27 @@ while count < 5:
 downloadVideo(original_video[0], original_video[1], files[2])
 getVideoFromYouTube(user, all_tweets, files[0], files[3])
 getAudio(user, all_tweets, files[0], files[4])'''
+
+# wget.download('https://pbs.twimg.com/media/D_FZoE1UIAESADq.jpg:large')
+url = 'https://pbs.twimg.com/media/D_FZoE1UIAESADq.jpg:large'
+# r = requests.get(url)
+# with open('./1.jpg:large', 'wb') as f:
+#         f.write(r.content)
+# urllib.request.urlretrieve(url, './1')
+
+files = os.listdir("C:/Users/alina/Desktop/Twitter_crawler_by_APIs/mengnanlan/Image")
+for filename in files:
+    portion = os.path.splitext(filename)
+    if portion[1] == ".unknown_video":
+        newname = portion[0] + ".jpg"
+        os.rename(filename, newname)
+
+# s = 'https://www.youtube.com/watch?v=EwJf5fw57Yo'
+# s = 'https://youtu.be/EoVP8uMMJc4'
+# if re.match('https://youtu.be/', s):
+#     a = re.split('/',s)[-1]
+# print(a)
+# s = 'https://www.youtube.com/watch?v=DL7eonPOORM&list=PLoB11Z8A5Nz9Z8KQQPG_Uxkj6H497XlgD&index=1'
+# s = re.split('v=',s)
+# a = re.split('&',s[-1])[0]
+# print(a)
