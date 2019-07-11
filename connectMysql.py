@@ -1,6 +1,5 @@
 import tweepy
 import json
-import wget
 import time
 import threading
 import os
@@ -119,15 +118,6 @@ def getAudio(info, urls_of_audio, filename_path):
     print(f'getAudio    end：{time.strftime("%Y-%m-%d %H:%M:%S")}')
 
 
-def renamePhoto(path):
-    files = os.listdir(path)
-    for filename in files:
-        portion = os.path.splitext(filename)
-        if portion[1] == ".unknown_video":
-            newname = portion[0] + ".jpg"
-            os.rename(filename, newname)
-
-
 info = input("Enter twitter user_name - ")
 files = createFiles(info)
 api = Auth()
@@ -143,11 +133,14 @@ urls_of_video = set()
 urls_of_audio = set()
 url = ''
 name = ''
-tweet_sql = "insert into tweet_info(user_id, user_name, tweet_id, create_at, message, location) values (%s, %s, %s, %s, %s, %s);"
+tweet_sql = "insert into tweet_info(user_id, user_name, tweet_id, created_at, message, location) values (%s, %s, %s, %s, %s, %s);"
 media_sql = "insert into media_info(date_info, user_id, user_name, tweet_id, media_type, media_url, media_name, media_store_path) values (%s, %s, %s, %s, %s, %s, %s, %s);"
 
 try:
     for status in all_tweets:
+        message = str(status.full_text.encode('utf-8'))
+        message = re.split('\'',message)[1]
+
         try:
             entities = status.extended_entities
         except AttributeError:
@@ -158,7 +151,7 @@ try:
             if len(media) != 0:
                 cursor.execute(tweet_sql,
                                [status.user.id_str, status.user.screen_name, status.id_str, status.created_at,
-                                status.full_text.encode('utf-8'), status.user.location])
+                                message, status.user.location])
                 db.commit()
 
                 for i in range(len(media)):
@@ -193,13 +186,16 @@ except tweepy.TweepError as e:
 
 try:
     for status in all_tweets:
+        message = str(status.full_text.encode('utf-8'))
+        message = re.split('\'', message)[1]
+
         try:
             for u in status.entities['urls']:
                 if isVideo(u['expanded_url']):
                     type_flag = 3
                     cursor.execute(tweet_sql,
                                    [status.user.id_str, status.user.screen_name, status.id_str, status.created_at,
-                                    status.full_text.encode('utf-8'), status.user.location])
+                                    message, status.user.location])
                     db.commit()
                     url = u['expanded_url']
                     if re.match('https://youtu.be/', url):
