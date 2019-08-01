@@ -42,7 +42,9 @@ def createFiles(user):
 
 
 def isVideo(s):
-    if s.startswith('https://youtu.be/') or s.startswith('https://www.youtube.com/'):
+    # if s.startswith('https://youtu.be/') or s.startswith('https://www.youtube.com/'):
+    #     return True
+    if s.startswith('https://vimeo.com/'):
         return True
 
 
@@ -51,9 +53,15 @@ def isAudio(s):
         return True
 
 
+def isPhoto(s):
+    if s.startswith('https://flic.kr/p/'):
+        return True
+
+
 def getTweets(api, user, filename, filename_path1, filename_path2):
     urls_of_video = set()
     urls_of_audio = set()
+    urls_of_photo = set()
 
     with open(filename + '/tweets_of_' + user + '.csv', 'a', encoding='utf-8') as the_file:
         writer = csv.writer(the_file)
@@ -64,7 +72,7 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
                 expanded_urls = []
                 try:
                     for u in tweet.entities['urls']:
-                        if isVideo(u['expanded_url']) or isAudio(u['expanded_url']):
+                        if isVideo(u['expanded_url']) or isAudio(u['expanded_url']) or isPhoto(u['expanded_url']):
                             expanded_urls.append(u['expanded_url'])
                             if isVideo(u['expanded_url']):
                                 writer.writerow(
@@ -78,9 +86,18 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
                                      tweet.text.encode('utf-8'),
                                      expanded_urls, 'audio'])
                                 urls_of_audio.add(u['expanded_url'])
+                            elif isPhoto(u['expanded_url']):
+                                writer.writerow(
+                                    [tweet.user.id, tweet.user.screen_name, tweet.id_str, tweet.created_at,
+                                     tweet.text.encode('utf-8'),
+                                     expanded_urls, 'flickr'])
+                                urls_of_photo.add(u['expanded_url'])
+
                 except IndexError:
                     urls_of_video.add('')
                     urls_of_audio.add('')
+                    urls_of_photo.add('')
+
         except tweepy.TweepError as e:
             print(e.reason)
             time.sleep(60)
@@ -93,8 +110,24 @@ def getTweets(api, user, filename, filename_path1, filename_path2):
         for i in urls_of_audio:
             txt.write(i + '\n')
 
+    with open(filename_path1 + '/urls_of_photo_of_' + user + '.txt', 'w', encoding='utf-8') as txt:
+        for i in urls_of_photo:
+            txt.write(i + '\n')
+
+
+def printTweets(api, user):
+    l = []
+    for tweet in tweepy.Cursor(api.user_timeline, screen_name=user).items():
+        try:
+            for u in tweet.entities['urls']:
+                l.append(u['expanded_url'])
+        except IndexError:
+            l.append('no urls')
+    print(l)
+
 
 user = input("Enter twitter user_name - ")
 files = createFiles(user)
 api = Auth()
 getTweets(api, user, files[0], files[1], files[2])
+printTweets(api, user)
